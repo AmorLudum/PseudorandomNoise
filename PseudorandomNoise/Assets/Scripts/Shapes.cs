@@ -11,7 +11,7 @@ public static class Shapes
     public struct Job : IJobFor
     {
         [WriteOnly]
-        NativeArray<float3> positions;
+        NativeArray<float3> positions, normals;
 
         public float resolution, invResolution;
         public float3x4 positionTRS;
@@ -24,16 +24,18 @@ public static class Shapes
             uv.y = invResolution * (uv.y + 0.5f) - 0.5f;
 
             positions[i] = mul(positionTRS, float4(uv.x, 0.0f, uv.y, 1.0f));
+            normals[i] = normalize(mul(positionTRS, float4(0f, 1f, 0f, 1f)));
         }
 
         public static JobHandle ScheduleParallel
         (
-            NativeArray<float3> positions, int resolution, float4x4 trs, JobHandle dependency
+            NativeArray<float3> positions, NativeArray<float3> normals, int resolution, float4x4 trs, JobHandle dependency
         )
         {
             return new Job
             {
                 positions = positions,
+                normals = normals,
                 resolution = resolution,
                 invResolution = 1f / resolution,
                 positionTRS = float3x4(trs.c0.xyz, trs.c1.xyz, trs.c2.xyz, trs.c3.xyz)
